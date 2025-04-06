@@ -1,78 +1,103 @@
-## Assignment 2: Basic Pseudo-Random Number Generator (PRNG)
+## Assignment 3: Password Generator
 
 # Background
-In C programming, one of the most common tasks in software development is generating random numbers for various applications, ranging from simulations to games. Pseudo-Random Number Generators (PRNGs) are algorithms used to generate sequences of numbers that approximate the properties of random numbers.
-In this assignment, you will implement a basic pseudo-random number generator and demonstrate its limitations. Additionally, you will learn how to manually manage memory, debug programs, and handle file I/O in C. This will help you understand the underlying principles of randomness, how to create your own PRNG, and the potential security concerns that arise from improper PRNG usage.
+Password selection is a fundamental aspect of computer security. Over the years, best practices for password selection have evolved. A mixture of alphabetic cases, digits, and symbols is commonly recommended, along with adequate length requirements. However, user-selected passwords often lead to weak choices due to the inherent limitations of human memory and biases.
 
-# Assignment Tasks
-PRNG Implementation
+In this assignment, we explore password generation and security by implementing a program that generates random passwords based on user-defined parameters. This assignment also emphasizes the need for secure password management practices such as using password managers to generate and store complex passwords for each unique account.
 
-You are tasked with writing a function that generates pseudo-random numbers based on the Linear Congruential Generator (LCG) algorithm. The LCG is a simple and widely-used PRNG algorithm, which is defined by the equation:
+Your Program
+Your program will generate random passwords based on user-defined parameters. It will be split into multiple source files, following a modular approach, and you will use Make or CMake to manage the build process.
 
-Xn+1​=(a⋅Xn​+c)modm
+# Requirements
+Your program should generate random passwords based on the following command line interface (CLI):
+
+program length quantity [-luds] [alphabet]
 Where:
 
-Xn​ is the current state of the generator.
+length: the length of each password (an integer).
 
-Xn+1​ is the next random number.
+quantity: the number of passwords to generate (an integer).
 
-a, 
-c, and 
-m are constants that determine the behavior of the generator.
+-luds flags: Optional flags that specify the alphabet groups to use for password generation. These flags correspond to the character groups:
 
-Implement a function lcg() in C that generates a sequence of pseudo-random numbers.
+l: Lowercase letters (a-z).
 
-# Function prototype:
+u: Uppercase letters (A-Z).
 
-unsigned int lcg(unsigned int seed);
-You will need to define the constants 
-a, 
-c, and 
-m as static variables within the function. Use the following values (which are commonly used for LCG):
+d: Digits (0-9).
 
-a=1664525
+s: Symbols (e.g., ~!@#$%^&*()_+).
 
-c=1013904223
+alphabet: A string of custom characters that will be included in the generated password. This allows users to add any characters to the password generation pool.
 
-m=232
+# Functionality
+Union of Alphabet:
+The program will combine the character groups from the -luds flags with the user-defined characters in the alphabet. Remove any duplicates when forming the union.
 
-# Demonstrating the Limitations of PRNGs
+Password Generation:
+Generate the specified number of passwords (quantity), each of the given length (length). A random value should be generated, and the corresponding character from the alphabet should be picked for each password.
 
-Generate a sequence of 100 pseudo-random numbers using your lcg() function and display them. Observe the sequence, and notice that while the numbers appear random, there will be a predictable pattern over time. This is the limitation of the LCG PRNG, and you'll discuss this in your report.
+Information Content Calculation:
+For each generated password, compute the information content using the same approach from Assignment 2. Display the information content for each password, calculated in bits.
 
-# Memory Management and File I/O
+Valid Character Checking:
+Ensure that all characters specified in the alphabet are valid (i.e., they should be graphical ASCII characters). Use the isgraph() function from <ctype.h> to filter out non-graphical characters and print an error if any invalid characters are detected.
 
-Implement a function save_random_numbers_to_file() that takes the generated sequence of pseudo-random numbers and writes them to a binary file (random_numbers.dat).
+# Error Handling:
+Handle erroneous inputs such as invalid characters in the alphabet or invalid flag combinations. Provide appropriate error messages.
 
-Implement a function load_random_numbers_from_file() that reads the random numbers from the binary file into an array.
+#  File Organization
+At a minimum, your program should have the following files:
 
-# Use the following function prototypes:
+main.c: Contains only the main function and handles command-line parsing.
 
-void save_random_numbers_to_file(const char *filename, unsigned int *numbers, size_t count);
-void load_random_numbers_from_file(const char *filename, unsigned int *numbers, size_t count);
-Debugging and Build System
+alphabet.c and alphabet.h: Contains code to calculate the union of the alphabet groups and user-specified characters.
 
-As part of the build process, you will use the Makefile to automate compiling and linking your program.
+information_content.c and information_content.h: Implements the function to calculate the information content of a password.
 
-The program should be compiled using gcc. Include a debugging option -g in the Makefile to enable debugging support.
+pw_generator.c and pw_generator.h: Contains the logic for password generation and output.
 
+# Sample Command-Line Usage
+$ ./pwgen 8 2 -lu
+Using alphabet: ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz
+Password 1:
+Password: password
+Information content: 37.60 bits
+Password 2:
+Password: Password
+Information content: 45.60 bits
 
-# Deliverables
-Source Code:
+# Constraints & Requirements
+PRNG: Use the PRNG facilities provided by the C standard library (specifically rand() and srand()) to generate random numbers. Be aware of modulo bias and work around it.
 
-main.c: The main program file with the lcg() function and the save_random_numbers_to_file() and load_random_numbers_from_file() functions.
+Seeding the PRNG: Ensure you seed the PRNG using srand() with a value that changes (typically the current time).
 
-Makefile: A Makefile that compiles and links the program. It should also support debugging with the -g flag.
+Character Set Union:
+To calculate the union of the alphabet, create an array corresponding to all ASCII characters, initially set to zero. Set to non-zero any character specified either via the -luds flags or user-specified alphabet. This array can then be iterated through to extract the final set of usable characters.
 
+Character Checking:
+Ensure that characters passed in the alphabet are graphical ASCII characters. Non-graphical characters should trigger an error.
 
+Flags:
+If no -luds flags or alphabet are specified, assume that the user has requested all of the -luds flags (-l, -u, -d, and -s).
 
-# Hints and Tips
-The LCG PRNG has the benefit of being simple, but it has weaknesses in terms of randomness. The generated numbers will eventually repeat in a predictable cycle.
+ 
 
-Be cautious when handling memory in C. Ensure that any dynamically allocated memory is freed properly to avoid memory leaks.
+# Hints:
+Use rand() to generate random numbers and srand() to seed the PRNG.
 
-When working with binary files, keep in mind that file I/O can be tricky with different data types. Be sure to write and read the data correctly, ensuring you respect the data types being handled.
+You can store the available characters in a boolean array that represents the presence of each ASCII character.
 
-You will be using the POSIX libraries for file I/O in C. Functions like fopen(), fwrite(), fread(), and fclose() will be useful.
+Be sure to handle errors where users specify non-graphical characters.
 
-Use gdb or lldb to debug your code. Consider setting breakpoints to inspect how the random numbers are generated and how the program handles files.
+You may want to implement functions to:
+
+Parse the command-line arguments.
+
+Calculate the union of the alphabet.
+
+Generate a password by picking random characters from the final alphabet.
+
+Compute the information content of each generated password.
+
+ 
