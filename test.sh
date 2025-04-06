@@ -1,65 +1,208 @@
 #!/bin/bash
 
 echo "Running tests..."
+echo
 
-# Compile the program (ensure the makefile is correctly configured for this)
-make
-
-# Run the program
-output=$(./a.out)
-
-# Check if the program ran successfully
-if [ $? -eq 0 ]; then
-    echo "Pass: Program exited zero"
+# Test 1: Check basic password generation with default alphabet flags (-lud) and length 8, quantity 2
+output=$(./pwgen 8 2 -lud)
+expected_output="Password 1:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits\n\nPassword 2:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits"
+if [[ "$output" =~ $expected_output ]]; then
+    echo "Pass: Test 1 passed"
 else
-    echo "Fail: Program did not exit zero"
+    echo "Fail: Test 1 failed"
+    echo "$output"
     exit 1
 fi
 
-# Check the generated output
-expected_output="Generated random numbers:"
-
-if echo "$output" | grep -q "$expected_output"; then
-    echo "Pass: Program generated output"
+# Test 2: Check password generation with only lowercase letters (-l) and length 8, quantity 3
+output=$(./pwgen 8 3 -l)
+expected_output="Password 1:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits\n\nPassword 2:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits\n\nPassword 3:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits"
+if [[ "$output" =~ $expected_output ]]; then
+    echo "Pass: Test 2 passed"
 else
-    echo "Fail: Program did not produce correct output"
+    echo "Fail: Test 2 failed"
+    echo "$output"
     exit 1
 fi
 
-# Check that the file exists and is not empty
-if [ -f "random_numbers.dat" ]; then
-    echo "Pass: File 'random_numbers.dat' exists"
-    # Verify that the file has data by checking its size
-    if [ -s "random_numbers.dat" ]; then
-        echo "Pass: File 'random_numbers.dat' is not empty"
-    else
-        echo "Fail: File 'random_numbers.dat' is empty"
-        exit 1
-    fi
+# Test 3: Check password generation with a custom alphabet and length 10, quantity 2
+output=$(./pwgen 10 2 -lud abc123)
+expected_output="Password 1:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits\n\nPassword 2:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits"
+if [[ "$output" =~ $expected_output ]]; then
+    echo "Pass: Test 3 passed"
 else
-    echo "Fail: File 'random_numbers.dat' does not exist"
+    echo "Fail: Test 3 failed"
+    echo "$output"
     exit 1
 fi
 
-# Load numbers from the file and compare them
-echo "Loading numbers from the binary file..."
-loaded_output=$(xxd -p random_numbers.dat | tr -d '\n' | sed 's/\(..\)/\1 /g')
-
-# The expected format for loaded numbers (you would need to manually inspect or calculate based on seed and algorithm)
-# This is just an example, you should replace it with the actual expected output from your random numbers
-expected_loaded_output="expected_random_number_sequence_here"
-
-if [ "$loaded_output" == "$expected_loaded_output" ]; then
-    echo "Pass: Loaded numbers match the expected sequence"
+# Test 4: Check for invalid flag (should ignore or print a warning)
+output=$(./pwgen 8 1 -x)
+expected_output="Warning: Unrecognized flag '-x'. Ignoring."
+if [[ "$output" == *"$expected_output"* ]]; then
+    echo "Pass: Test 4 passed"
 else
-    echo "Fail: Loaded numbers do not match the expected sequence"
-    echo "Expected: $expected_loaded_output"
-    echo "Got: $loaded_output"
+    echo "Fail: Test 4 failed"
+    echo "$output"
     exit 1
 fi
 
-# All tests passed
+# Test 5: Check for non-graphical characters in the alphabet (should be skipped)
+output=$(./pwgen 8 2 -lud $'\x80')
+expected_output="Warning: Non-graphical character detected, skipping."
+if [[ "$output" == *"$expected_output"* ]]; then
+    echo "Pass: Test 5 passed"
+else
+    echo "Fail: Test 5 failed"
+    echo "$output"
+    exit 1
+fi
+
+# Test 6: Check for missing required arguments (should exit with error)
+output=$(./pwgen)
+expected_output="Error: Both length and quantity must be specified."
+if [[ "$output" == *"$expected_output"* ]]; then
+    echo "Pass: Test 6 passed"
+else
+    echo "Fail: Test 6 failed"
+    echo "$output"
+    exit 1
+fi
+
+echo
+echo "Running rigorous tests..."
+echo
+
+# Test 1: Check basic password generation with default alphabet flags (-lud) and length 8, quantity 2
+output=$(./pwgen 8 2 -lud)
+expected_output="Password 1:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits\n\nPassword 2:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits"
+if [[ "$output" =~ $expected_output ]]; then
+    echo "Pass: Test 1 passed"
+else
+    echo "Fail: Test 1 failed"
+    echo "$output"
+    exit 1
+fi
+
+# Test 2: Check password generation with only lowercase letters (-l) and length 8, quantity 3
+output=$(./pwgen 8 3 -l)
+expected_output="Password 1:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits\n\nPassword 2:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits\n\nPassword 3:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits"
+if [[ "$output" =~ $expected_output ]]; then
+    echo "Pass: Test 2 passed"
+else
+    echo "Fail: Test 2 failed"
+    echo "$output"
+    exit 1
+fi
+
+# Test 3: Check password generation with a custom alphabet (lowercase letters + digits) and length 10, quantity 2
+output=$(./pwgen 10 2 -lud abc123)
+expected_output="Password 1:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits\n\nPassword 2:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits"
+if [[ "$output" =~ $expected_output ]]; then
+    echo "Pass: Test 3 passed"
+else
+    echo "Fail: Test 3 failed"
+    echo "$output"
+    exit 1
+fi
+
+# Test 4: Check for invalid flag (should ignore or print a warning)
+output=$(./pwgen 8 1 -x)
+expected_output="Warning: Unrecognized flag '-x'. Ignoring."
+if [[ "$output" == *"$expected_output"* ]]; then
+    echo "Pass: Test 4 passed"
+else
+    echo "Fail: Test 4 failed"
+    echo "$output"
+    exit 1
+fi
+
+# Test 5: Check for non-graphical characters in the alphabet (should be skipped)
+output=$(./pwgen 8 2 -lud $'\x80')
+expected_output="Warning: Non-graphical character detected, skipping."
+if [[ "$output" == *"$expected_output"* ]]; then
+    echo "Pass: Test 5 passed"
+else
+    echo "Fail: Test 5 failed"
+    echo "$output"
+    exit 1
+fi
+
+# Test 6: Test password generation with a very large password length (e.g., 1000)
+output=$(./pwgen 1000 1 -lud)
+if [[ ${#output} -gt 1000 ]]; then
+    echo "Fail: Test 6 failed, password exceeds length limit"
+    echo "$output"
+    exit 1
+else
+    echo "Pass: Test 6 passed"
+fi
+
+# Test 7: Test password generation with a large quantity (e.g., 100 passwords)
+output=$(./pwgen 8 100 -lud)
+if [[ $(echo "$output" | grep -c "Password") -eq 100 ]]; then
+    echo "Pass: Test 7 passed"
+else
+    echo "Fail: Test 7 failed"
+    echo "$output"
+    exit 1
+fi
+
+# Test 8: Test with no -lud flags and a custom alphabet (should default to all luds)
+output=$(./pwgen 8 2 abc123)
+expected_output="Password 1:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits\n\nPassword 2:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits"
+if [[ "$output" =~ $expected_output ]]; then
+    echo "Pass: Test 8 passed"
+else
+    echo "Fail: Test 8 failed"
+    echo "$output"
+    exit 1
+fi
+
+# Test 9: Test for alphabet with mixed custom input (symbols, upper, lower, digits)
+output=$(./pwgen 10 2 -lud @#$%abcd1234XYZ)
+expected_output="Password 1:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits\n\nPassword 2:.*\nPassword:.*\nInformation content: [0-9]+\.[0-9]+ bits"
+if [[ "$output" =~ $expected_output ]]; then
+    echo "Pass: Test 9 passed"
+else
+    echo "Fail: Test 9 failed"
+    echo "$output"
+    exit 1
+fi
+
+# Test 10: Test with empty alphabet (should result in an error or no passwords generated)
+output=$(./pwgen 8 1 "")
+expected_output="Error: No valid characters in alphabet."
+if [[ "$output" == *"$expected_output"* ]]; then
+    echo "Pass: Test 10 passed"
+else
+    echo "Fail: Test 10 failed"
+    echo "$output"
+    exit 1
+fi
+
+# Test 11: Test with non-ASCII characters in the alphabet
+output=$(./pwgen 8 2 -lud "abc\x80")
+expected_output="Warning: Non-graphical character detected, skipping."
+if [[ "$output" == *"$expected_output"* ]]; then
+    echo "Pass: Test 11 passed"
+else
+    echo "Fail: Test 11 failed"
+    echo "$output"
+    exit 1
+fi
+
+# Test 12: Test invalid command (missing arguments, should show error)
+output=$(./pwgen)
+expected_output="Error: Both length and quantity must be specified."
+if [[ "$output" == *"$expected_output"* ]]; then
+    echo "Pass: Test 12 passed"
+else
+    echo "Fail: Test 12 failed"
+    echo "$output"
+    exit 1
+fi
+
 echo
 echo "All tests passed."
-
 exit 0
