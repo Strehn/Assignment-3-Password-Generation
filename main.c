@@ -4,43 +4,39 @@ Date
 Course
 */
 
-include <stdio.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
 #include <time.h>
 
+#include "alphabet.h"
+#include "information_content.h"
+#include "pw_generator.h"
+
+#define MAX_ALPHABET_SIZE 256
+
 // Function prototypes
-void generate_random_numbers(int *numbers, int count, unsigned int seed);
-void save_random_numbers_to_file(const char *filename, int *numbers, int count);
-void load_random_numbers_from_file(const char *filename, int *numbers, int count);
-void print_random_numbers(int *numbers, int count);
+void parse_arguments(int argc, char *argv[], int *length, int *quantity, int *alphabet_flags, char **alphabet);
+void generate_passwords(int length, int quantity, int *alphabet_flags, char *alphabet);
 
-int main() {
-    // Define how many random numbers we want to generate
-    int count = 10;
-    int numbers[count]; // Array to store generated numbers
+int main(int argc, char *argv[]) {
+    // Variables to store command-line arguments
+    int length = 0;
+    int quantity = 0;
+    int alphabet_flags[4] = {0}; // flags for l, u, d, s
+    char *alphabet = NULL;
 
-    // Use the current time as a seed for randomness 
-    // do not change this otherwise you will fail the test cases
-    unsigned int seed = time(NULL); 
+    // Parse command-line arguments
+    parse_arguments(argc, argv, &length, &quantity, alphabet_flags, &alphabet);
 
-    // Generate random numbers using LCG (Linear Congruential Generator)
-    generate_random_numbers(numbers, count, seed);
+    // Generate passwords and display their information content
+    generate_passwords(length, quantity, alphabet_flags, alphabet);
 
-    // Print the random numbers
-    printf("Generated random numbers:\n");
-    print_random_numbers(numbers, count);
-
-    // Save the random numbers to a binary file
-    save_random_numbers_to_file("random_numbers.dat", numbers, count);
-    printf("\nRandom numbers saved to 'random_numbers.dat'.\n");
-
-    // Load the numbers back from the file
-    int loaded_numbers[count];
-    load_random_numbers_from_file("random_numbers.dat", loaded_numbers, count);
-
-    // Print loaded numbers
-    printf("\nLoaded random numbers from file:\n");
-    print_random_numbers(loaded_numbers, count);
+    // Free dynamically allocated memory for alphabet if needed
+    if (alphabet != NULL) {
+        free(alphabet);
+    }
 
     return 0;
 }
