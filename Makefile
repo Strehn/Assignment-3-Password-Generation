@@ -1,24 +1,37 @@
-# Compiler and flags
 CC = gcc
-CFLAGS = -Wall -g -std=c99
+CFLAGS = -Wall -Wextra -std=c11 -g
 
-# Target executable
-TARGET = a.out
+# Source files
+SRC = main.c alphabet.c information_content.c pw_generator.c
+OBJ = $(SRC:.c=.o)
+EXEC = pwgen
 
-# Default target
-all: $(TARGET)
+# Output and test files
+TEST_SCRIPT = test.sh
 
-# Compile the program
-$(TARGET): main.c
-	$(CC) $(CFLAGS) -o $(TARGET) main.c
+# Default target: build the program
+all: $(EXEC)
 
-# Clean up the generated files (e.g., object files, executable)
+# Rule for building the executable
+$(EXEC): $(OBJ)
+	$(CC) $(OBJ) -o $(EXEC)
+
+# Rule for compiling .c files into .o files
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Clean up compiled files
 clean:
-	rm -f $(TARGET) random_numbers.dat
+	rm -f $(OBJ) $(EXEC)
 
-# Run the tests (typically invoked by the test script)
-run: $(TARGET)
-	./$(TARGET)
+# Run tests after building
+test: $(EXEC)
+	@echo "Running tests..."
+	@chmod +x $(TEST_SCRIPT)
+	@./$(TEST_SCRIPT)
+
+# Rebuild everything (clean and then all)
+rebuild: clean all
 
 # Phony targets
-.PHONY: all clean run
+.PHONY: all clean test rebuild
